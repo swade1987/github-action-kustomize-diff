@@ -1,0 +1,25 @@
+name: "kustomize-diff"
+description: "Kustomize build head and base of PR, add diff as comment"
+inputs:
+  base_ref:
+    description: "Ref for PR base"
+    required: true
+    default: ${{ github.base_ref }}
+  head_ref:
+    description: "Ref for PR head"
+    required: true
+    default: ${{ github.head_ref }}
+  pr_num:
+    description: "PR number / ID"
+    required: true
+    default: ${{ github.event.number }}
+  token:
+    description: "Token for GitHub authentication"
+    required: true
+    default: ${{ github.token }}
+outputs:
+  diff:
+    description: "Diff between kustomize built head and base"
+runs:
+  using: "docker"
+  image: "Dockerfile"
