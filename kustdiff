@@ -25,6 +25,7 @@ function build {
 }
 
 function main {
+  git config --global --add safe.directory "$GITHUB_WORKSPACE"
   local diff escaped_output output
   build "$INPUT_HEAD_REF"
   build "$INPUT_BASE_REF"
