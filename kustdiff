@@ -34,6 +34,12 @@ function main {
   set -e
   output=$(printf "\`\`\` diff\n%s\n\`\`\`\n" "$diff")
   escaped_output=${output//$'\n'/'%0A'}
+
+  # If escaped output is longer than 65000 characters return "output to large to print as a github comment"
+  if [ ${#escaped_output} -gt 65000 ]; then
+    escaped_output="Output is greater than 65000 characters, and therefore too large to print as a github comment."
+  fi
+
   echo "::set-output name=diff::$escaped_output"
   printf "\n\nOutput: %s\n" "$escaped_output"
 }
