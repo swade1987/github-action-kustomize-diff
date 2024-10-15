@@ -3,10 +3,10 @@
 set -eux
 
 TMP_DIR="$(mktemp -d)"
+ROOT_DIR="${1:-./clusters}"  # Default to ./clusters if no argument is provided
 
 function get_targets {
-  find . -maxdepth 4 -name kustomization.yaml -exec dirname {} \;
-  find . -mindepth 4 -maxdepth 4 -name kustomization.yaml -exec dirname {} \; | sort | uniq | grep variant
+  find "$ROOT_DIR" -maxdepth 4 -name kustomization.yaml -exec dirname {} \;
 }
 
 function build {
@@ -16,10 +16,10 @@ function build {
   for envpath in $(get_targets); do
     local build_dir
     if ! [ -d "$envpath" ]; then continue; fi
-    build_dir="$TMP_DIR/$ref/${envpath#*kustomize/}"
+    local build_dir="$TMP_DIR/$ref/${envpath#$ROOT_DIR/}"
     printf "\n\nCreating build directory: %s\n" "$build_dir"
     mkdir -p "$build_dir"
-    echo "Running kustomize"
+    printf "Running kustomize\n"
     kustomize build "$envpath" -o "$build_dir"
   done
 }
@@ -43,5 +43,13 @@ function main {
   echo "::set-output name=diff::$escaped_output"
   printf "\n\nOutput: %s\n" "$escaped_output"
 }
+
+# Check if a directory is provided as an argument
+if [ $# -ge 1 ]; then
+  ROOT_DIR="$1"
+fi
+
+echo "Using root directory: $ROOT_DIR"
+main
 
 main
