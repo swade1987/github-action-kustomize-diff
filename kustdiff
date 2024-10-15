@@ -5,7 +5,7 @@ set -eux
 TMP_DIR="$(mktemp -d)"
 
 function get_targets {
-  find . -maxdepth 3 -name kustomization.yaml -exec dirname {} \;
+  find . -maxdepth 4 -name kustomization.yaml -exec dirname {} \;
   find . -mindepth 4 -maxdepth 4 -name kustomization.yaml -exec dirname {} \; | sort | uniq | grep variant
 }
 
