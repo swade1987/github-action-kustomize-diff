@@ -8,7 +8,7 @@ DEBUG="${DEBUG:-true}"
 
 function debug_log() {
   if [ "$DEBUG" = "true" ]; then
-    printf "[DEBUG] %s" "$1"
+    printf "[DEBUG] %s \n" "$1"
   fi
 }
 
@@ -20,25 +20,27 @@ function safe_dirname() {
   echo "$1" | sed 's/[^a-zA-Z0-9.]/_/g'
 }
 
+function safe_filename() {
+  echo "$1" | sed 's/[^a-zA-Z0-9.]/_/g'
+}
+
 function build {
   local ref="$1"
-  local safe_ref=$(safe_dirname "$ref")
+  local safe_ref=$(safe_filename "$ref")
   echo "Checking out ref: $ref"
   git checkout "$ref" --quiet
+  mkdir -p "$TMP_DIR/$safe_ref"
   for envpath in $(get_targets); do
-
     local relative_path="${envpath#$ROOT_DIR/}"
-    local build_dir="$TMP_DIR/$safe_ref/$relative_path"
-    printf "Creating build directory: %s\n" "$build_dir"
-    mkdir -p "$build_dir"
-    local output_file="$build_dir/manifests.yaml"
-    printf "Running kustomize for %s\n" "$envpath"
+    local safe_path=$(safe_filename "$relative_path")
+    local output_file="$TMP_DIR/$safe_ref/${safe_path}.yaml"
+    echo "Running kustomize for $envpath"
     kustomize build "$envpath" -o "$output_file"
 
-    #debug_log "Contents of $output_file:"
-    #debug_log "$(cat "$output_file")"
-    #debug_log "End of $output_file"
-    #debug_log "------------------------------------"
+#    debug_log "Contents of $output_file:"
+#    debug_log "$(cat "$output_file")"
+#    debug_log "End of $output_file"
+#    debug_log "------------------------------------"
   done
 }
 
