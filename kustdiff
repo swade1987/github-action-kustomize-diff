@@ -4,23 +4,41 @@ set -eux
 
 TMP_DIR="$(mktemp -d)"
 ROOT_DIR="${1:-./clusters}"  # Default to ./clusters if no argument is provided
+DEBUG="${DEBUG:-true}"
+
+function debug_log() {
+  if [ "$DEBUG" = "true" ]; then
+    printf "[DEBUG] %s" "$1"
+  fi
+}
 
 function get_targets {
   find "$ROOT_DIR" -maxdepth 4 -name kustomization.yaml -exec dirname {} \;
 }
 
+function safe_dirname() {
+  echo "$1" | sed 's/[^a-zA-Z0-9.]/_/g'
+}
+
 function build {
   local ref="$1"
-  printf "\n\nChecking out ref: %s\n" "$ref"
+  local safe_ref=$(safe_dirname "$ref")
+  echo "Checking out ref: $ref"
   git checkout "$ref" --quiet
   for envpath in $(get_targets); do
-    local build_dir
-    if ! [ -d "$envpath" ]; then continue; fi
-    local build_dir="$TMP_DIR/$ref/${envpath#$ROOT_DIR/}"
-    printf "\n\nCreating build directory: %s\n" "$build_dir"
+
+    local relative_path="${envpath#$ROOT_DIR/}"
+    local build_dir="$TMP_DIR/$safe_ref/$relative_path"
+    printf "Creating build directory: %s\n" "$build_dir"
     mkdir -p "$build_dir"
-    printf "Running kustomize\n"
-    kustomize build "$envpath" -o "$build_dir"
+    local output_file="$build_dir/manifests.yaml"
+    printf "Running kustomize for %s\n" "$envpath"
+    kustomize build "$envpath" -o "$output_file"
+
+    debug_log "Contents of $output_file:"
+    debug_log "$(cat "$output_file")"
+    debug_log "End of $output_file"
+    debug_log "------------------------------------"
   done
 }
 
@@ -29,8 +47,13 @@ function main {
   local diff escaped_output output
   build "$INPUT_HEAD_REF"
   build "$INPUT_BASE_REF"
+
+  local safe_head_ref=$(safe_dirname "$INPUT_HEAD_REF")
+  local safe_base_ref=$(safe_dirname "$INPUT_BASE_REF")
+
+
   set +e
-  diff=$(git diff --no-index "$TMP_DIR/$INPUT_BASE_REF" "$TMP_DIR/$INPUT_HEAD_REF")
+  diff=$(git diff --no-index "$TMP_DIR/$safe_base_ref" "$TMP_DIR/$safe_head_ref")
   set -e
   output=$(printf "\`\`\` diff\n%s\n\`\`\`\n" "$diff")
   escaped_output=${output//$'\n'/'%0A'}
@@ -50,6 +73,5 @@ if [ $# -ge 1 ]; then
 fi
 
 echo "Using root directory: $ROOT_DIR"
-main
-
+debug_log "Debug mode is enabled"
 main
