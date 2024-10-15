@@ -35,10 +35,10 @@ function build {
     printf "Running kustomize for %s\n" "$envpath"
     kustomize build "$envpath" -o "$output_file"
 
-    debug_log "Contents of $output_file:"
-    debug_log "$(cat "$output_file")"
-    debug_log "End of $output_file"
-    debug_log "------------------------------------"
+    #debug_log "Contents of $output_file:"
+    #debug_log "$(cat "$output_file")"
+    #debug_log "End of $output_file"
+    #debug_log "------------------------------------"
   done
 }
 
