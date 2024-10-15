@@ -51,9 +51,20 @@ function main {
   local safe_head_ref=$(safe_dirname "$INPUT_HEAD_REF")
   local safe_base_ref=$(safe_dirname "$INPUT_BASE_REF")
 
-
   set +e
   diff=$(git diff --no-index "$TMP_DIR/$safe_base_ref" "$TMP_DIR/$safe_head_ref")
+
+  debug_log "Git diff output:"
+  debug_log "$diff"
+  debug_log "End of git diff output"
+  debug_log "------------------------------------"
+  
+  if [[ -z "$diff" ]]; then
+    output="No differences found between $INPUT_BASE_REF and $INPUT_HEAD_REF"
+  else
+    output=$(printf "Differences between %s and %s:\n\`\`\`diff\n%s\n\`\`\`\n" "$INPUT_BASE_REF" "$INPUT_HEAD_REF" "$diff")
+  fi
+
   set -e
   output=$(printf "\`\`\` diff\n%s\n\`\`\`\n" "$diff")
   escaped_output=${output//$'\n'/'%0A'}
