@@ -83,13 +83,12 @@ function main {
   if [[ -z "$diff" ]]; then
     output="No differences found between $INPUT_BASE_REF and $INPUT_HEAD_REF"
   else
-    # Format the diff output cleanly
-    output="Comparing changes between $INPUT_BASE_REF and $INPUT_HEAD_REF\n\n$diff"
+    # Just pass through the raw git diff output
+    output="$diff"
   fi
 
   escaped_output=${output//$'\n'/'%0A'}
 
-  # If escaped output is longer than 65000 characters return "output to large to print as a github comment"
   if [ ${#escaped_output} -gt 65000 ]; then
     escaped_output="Output is greater than 65000 characters, and therefore too large to print as a github comment."
   fi
