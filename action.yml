@@ -17,6 +17,10 @@ inputs:
     description: "Token for GitHub authentication"
     required: true
     default: ${{ github.token }}
+  root_dir:
+    description: "Root directory for kustomize files"
+    required: false
+    default: "./kustomize"
 outputs:
   diff:
     description: "Diff between kustomize built head and base"

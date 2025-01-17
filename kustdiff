@@ -3,12 +3,20 @@
 set -eux
 
 TMP_DIR="$(mktemp -d)"
-ROOT_DIR="${1:-./clusters}"  # Default to ./clusters if no argument is provided
+# Allow root directory to be set via environment variable or command line argument
+ROOT_DIR="${INPUT_ROOT_DIR:-${1:-./kustomize}}"  # First check env var, then argument, then default
 DEBUG="${DEBUG:-true}"
 
 function debug_log() {
   if [ "$DEBUG" = "true" ]; then
     printf "[DEBUG] %s \n" "$1"
+  fi
+}
+
+function validate_root_dir() {
+  if [ ! -d "$ROOT_DIR" ]; then
+    echo "Error: Root directory '$ROOT_DIR' does not exist"
+    exit 1
   fi
 }
 
@@ -36,15 +44,13 @@ function build {
     local output_file="$TMP_DIR/$safe_ref/${safe_path}.yaml"
     echo "Running kustomize for $envpath"
     kustomize build "$envpath" -o "$output_file"
-
-#    debug_log "Contents of $output_file:"
-#    debug_log "$(cat "$output_file")"
-#    debug_log "End of $output_file"
-#    debug_log "------------------------------------"
   done
 }
 
 function main {
+  # Validate root directory before proceeding
+  validate_root_dir
+
   git config --global --add safe.directory "$GITHUB_WORKSPACE"
   local diff escaped_output output
   build "$INPUT_HEAD_REF"
@@ -60,7 +66,7 @@ function main {
   debug_log "$diff"
   debug_log "End of git diff output"
   debug_log "------------------------------------"
-  
+
   if [[ -z "$diff" ]]; then
     output="No differences found between $INPUT_BASE_REF and $INPUT_HEAD_REF"
   else
@@ -80,11 +86,10 @@ function main {
   printf "\n\nOutput: %s\n" "$escaped_output"
 }
 
-# Check if a directory is provided as an argument
-if [ $# -ge 1 ]; then
-  ROOT_DIR="$1"
-fi
-
-echo "Using root directory: $ROOT_DIR"
+# Print initial configuration
+echo "Configuration:"
+echo "ROOT_DIR: $ROOT_DIR"
+echo "DEBUG: $DEBUG"
 debug_log "Debug mode is enabled"
+
 main
