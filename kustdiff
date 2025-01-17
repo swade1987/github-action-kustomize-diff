@@ -83,11 +83,9 @@ function main {
   if [[ -z "$diff" ]]; then
     output="No differences found between $INPUT_BASE_REF and $INPUT_HEAD_REF"
   else
-    output=$(printf "Differences between %s and %s:\n\`\`\`diff\n%s\n\`\`\`\n" "$INPUT_BASE_REF" "$INPUT_HEAD_REF" "$diff")
+    output=$(printf "%s" "$diff")
   fi
 
-  set -e
-  output=$(printf "\`\`\` diff\n%s\n\`\`\`\n" "$diff")
   escaped_output=${output//$'\n'/'%0A'}
 
   # If escaped output is longer than 65000 characters return "output to large to print as a github comment"
@@ -96,7 +94,6 @@ function main {
   fi
 
   echo "::set-output name=diff::$escaped_output"
-  printf "\n\nOutput: %s\n" "$escaped_output"
 }
 
 # Print initial configuration
