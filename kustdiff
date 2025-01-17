@@ -3,8 +3,8 @@
 set -eux
 
 TMP_DIR="$(mktemp -d)"
-# Allow root directory to be set via environment variable or command line argument
 ROOT_DIR="${INPUT_ROOT_DIR:-${1:-./kustomize}}"  # First check env var, then argument, then default
+MAX_DEPTH="${INPUT_MAX_DEPTH:-2}"  # Default to 2 if not specified
 DEBUG="${DEBUG:-true}"
 
 function debug_log() {
@@ -20,8 +20,15 @@ function validate_root_dir() {
   fi
 }
 
+function validate_max_depth() {
+  if ! [[ "$MAX_DEPTH" =~ ^[0-9]+$ ]]; then
+    echo "Error: max_depth must be a positive integer, got: $MAX_DEPTH"
+    exit 1
+  fi
+}
+
 function get_targets {
-  find "$ROOT_DIR" -maxdepth 4 -name kustomization.yaml -exec dirname {} \;
+  find "$ROOT_DIR" -maxdepth "$MAX_DEPTH" -name kustomization.yaml -exec dirname {} \;
 }
 
 function safe_dirname() {
@@ -44,12 +51,18 @@ function build {
     local output_file="$TMP_DIR/$safe_ref/${safe_path}.yaml"
     echo "Running kustomize for $envpath"
     kustomize build "$envpath" -o "$output_file"
+
+#    debug_log "Contents of $output_file:"
+#    debug_log "$(cat "$output_file")"
+#    debug_log "End of $output_file"
+#    debug_log "------------------------------------"
   done
 }
 
 function main {
-  # Validate root directory before proceeding
+  # Validate inputs before proceeding
   validate_root_dir
+  validate_max_depth
 
   git config --global --add safe.directory "$GITHUB_WORKSPACE"
   local diff escaped_output output
@@ -89,6 +102,7 @@ function main {
 # Print initial configuration
 echo "Configuration:"
 echo "ROOT_DIR: $ROOT_DIR"
+echo "MAX_DEPTH: $MAX_DEPTH"
 echo "DEBUG: $DEBUG"
 debug_log "Debug mode is enabled"
 

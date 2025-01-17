@@ -35,6 +35,7 @@ jobs:
         uses: swade1987/github-action-kustomize-diff@master
         with:
           root_dir: "./my-custom-path"
+          max_depth: "2" 
       - id: comment
         uses: unsplash/comment-on-pr@master
         env:

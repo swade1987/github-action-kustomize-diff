@@ -21,6 +21,10 @@ inputs:
     description: "Root directory for kustomize files"
     required: false
     default: "./kustomize"
+  max_depth:
+    description: "Maximum depth to search for kustomization files"
+    required: false
+    default: "2"
 outputs:
   diff:
     description: "Diff between kustomize built head and base"
