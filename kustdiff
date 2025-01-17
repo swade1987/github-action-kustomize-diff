@@ -83,7 +83,8 @@ function main {
   if [[ -z "$diff" ]]; then
     output="No differences found between $INPUT_BASE_REF and $INPUT_HEAD_REF"
   else
-    output=$(printf "%s" "$diff")
+    # Format the diff output cleanly
+    output="Comparing changes between $INPUT_BASE_REF and $INPUT_HEAD_REF\n\n$diff"
   fi
 
   escaped_output=${output//$'\n'/'%0A'}
