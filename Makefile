@@ -1,3 +1,2 @@
-# make new-patch-release
-new-%-release:
+semtag-%:
 	semtag final -s $*

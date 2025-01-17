@@ -33,6 +33,8 @@ jobs:
           fetch-depth: 0
       - id: kustomize-diff
         uses: swade1987/github-action-kustomize-diff@master
+        with:
+          root_dir: "./my-custom-path"
       - id: comment
         uses: unsplash/comment-on-pr@master
         env:
