@@ -25,25 +25,42 @@ on:
 
 jobs:
   kustomize-diff:
+    permissions:
+      pull-requests: write
+      contents: write
     runs-on: ubuntu-latest
     steps:
-      - id: checkout
-        uses: actions/checkout@v2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           fetch-depth: 0
       - id: kustomize-diff
-        uses: swade1987/github-action-kustomize-diff@master
+        uses: swade1987/github-action-kustomize-diff@v0.2.0
         with:
-          root_dir: "./my-custom-path"
+          root_dir: "./kustomize"
           max_depth: "2"
       - id: comment
-        uses: unsplash/comment-on-pr@master
+        uses: actions/github-script@v7.0.1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OUTPUT: ${{ steps.kustomize-diff.outputs.diff }}
         with:
-          msg: ${{ steps.kustomize-diff.outputs.diff }}
-          check_for_duplicate_msg: false
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const rawOutput = process.env.OUTPUT;
+            const noDiffMessage = "No differences found between";
+
+            const formattedOutput = rawOutput.includes(noDiffMessage)
+              ? `### ${rawOutput}`
+              : `### Kustomize Changes\n<details><summary>Show Diff</summary>\n\n\`\`\`diff\n${rawOutput}\n\`\`\`\n</details>`;
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: formattedOutput
+            })
 ```
+
+An example of the commented output can be found [here](https://github.com/swade1987/flux2-kustomize-template/pull/15#issuecomment-2600995488).
 
 ## Features
 
