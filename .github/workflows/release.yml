@@ -26,9 +26,6 @@ jobs:
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4
         with:
           node-version: "lts/*"
-      - name: install dependencies
-        run: |
-          npm install --save-dev --save-exact @semantic-release-extras/verified-git-commit
       - name: release
         uses: cycjimmy/semantic-release-action@v4
         env:
