@@ -3,11 +3,6 @@
     "@semantic-release/github",
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
-    "@semantic-release/changelog",
-    "@semantic-release-extras/verified-git-commit",
-    {
-        "assets": ["CHANGELOG.md"]
-    }
   ],
   "branches": [
     {
