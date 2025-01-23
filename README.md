@@ -1,18 +1,37 @@
-# GitHub Action for kustomize-diff
+# Kustomize Diff GitHub Action
 
-This [action](https://help.github.com/en/actions) can be used in any repository that uses [kustomize](https://kustomize.io/).
+This GitHub Action builds and compares Kustomize configurations between the base and head of a Pull Request, posting the differences as a PR comment. This helps reviewers easily identify configuration changes in Kubernetes manifests.
 
-# Summary
+## Features
 
-The steps the action takes are as follows:
+- Automatically builds Kustomize configurations from both PR branches
+- Generates a diff between base and head configurations
+- Configurable root directory and search depth for Kustomize files
+- Commits must meet [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
+  - Automated with GitHub Actions ([commit-lint](https://github.com/conventional-changelog/commitlint/#what-is-commitlint))
+- Pull Request titles must meet [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
+  - Automated with GitHub Actions ([pr-lint](https://github.com/amannn/action-semantic-pull-request))
+- Commits must be signed with [Developer Certificate of Origin (DCO)](https://developercertificate.org/)
+  - Automated with GitHub App ([DCO](https://github.com/apps/dco))
 
-- Store the output of `kustomize build` (for each environment) on the current branch in a temporary location.
-- Store the output of `kustomize build` (for each environment) on the master branch in a temporary location.
-- Based on the two outputs above it performs a git diff and stores the output in a variable called `escaped_output`.
+## Inputs
 
-This action can be combined with [unsplash/comment-on-pr](https://github.com/unsplash/comment-on-pr) to comment the output to the PR.
+| Name | Description | Required | Default |
+|------|-------------|----------|---------|
+| `base_ref` | Reference (branch/SHA) for PR base | Yes | `${{ github.base_ref }}` |
+| `head_ref` | Reference (branch/SHA) for PR head | Yes | `${{ github.head_ref }}` |
+| `pr_num` | Pull Request number/ID | Yes | `${{ github.event.number }}` |
+| `token` | GitHub token for authentication | Yes | `${{ github.token }}` |
+| `root_dir` | Root directory containing kustomize files | No | `./kustomize` |
+| `max_depth` | Maximum depth to search for kustomization files | No | `2` |
 
-# Example configuration
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| `diff` | Generated diff between kustomize built head and base |
+
+## Usage
 
 The below example will run `kustomize-diff` against your branch and commit the changes due to be applied back to your Pull Request.
 
@@ -61,25 +80,6 @@ jobs:
 ```
 
 An example of the commented output can be found [here](https://github.com/swade1987/flux2-kustomize-template/pull/15#issuecomment-2600995488).
-
-## Features
-
-- Commits must meet [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
-    - Automated with GitHub Actions ([commit-lint](https://github.com/conventional-changelog/commitlint/#what-is-commitlint))
-- Pull Request titles must meet [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
-    - Automated with GitHub Actions ([pr-lint](https://github.com/amannn/action-semantic-pull-request))
-- Commits must be signed with [Developer Certificate of Origin (DCO)](https://developercertificate.org/)
-    - Automated with GitHub App ([DCO](https://github.com/apps/dco))
-
-## Getting started
-
-Before working with the repository it is **mandatory** to execute the following command:
-
-```
-make initialise
-```
-
-The above command will install the `pre-commit` package and setup pre-commit checks for this repository including [conventional-pre-commit](https://github.com/compilerla/conventional-pre-commit) to make sure your commits match the conventional commit convention.
 
 ## Contributing to the repository
 

@@ -39,7 +39,17 @@ In general, we will merge a PR once one maintainer has endorsed it.
 For substantial changes, more people may become involved, and you might
 get asked to resubmit the PR or divide the changes into more than one PR.
 
-### Commit Message and Pull Request Requirements:
+## Pre-commit hooks
+
+Before working with the repository it is **mandatory** to execute the following command:
+
+```
+make initialise
+```
+
+The above command will install the `pre-commit` package and setup pre-commit checks for this repository including [conventional-pre-commit](https://github.com/compilerla/conventional-pre-commit) to make sure your commits match the conventional commit convention.
+
+## Commit Message and Pull Request Requirements:
 
 This repository enforces the `Conventional Commits` specification for both commit messages and pull request titles.
 
