@@ -2,6 +2,14 @@
 
 This GitHub Action builds and compares Kustomize configurations between the base and head of a Pull Request, posting the differences as a PR comment. This helps reviewers easily identify configuration changes in Kubernetes manifests.
 
+## Why Use This Action?
+Managing Kubernetes configurations across multiple environments and PRs can be challenging. This action automatically generates and posts clear diffs of your Kustomize changes directly in your PR comments. This helps:
+
+🔍 **Catch Configuration Mistakes** - Easily spot unintended changes before they hit production
+⏱️ **Speed Up Reviews** - Reviewers can instantly see what's changing without checking out the code
+🔄 **Validate Changes** - Confirm your Kustomize overlays are working as expected
+📝 **Document Changes** - Automatically track and document configuration changes in PR history
+
 ## Features
 
 - Automatically builds Kustomize configurations from both PR branches
