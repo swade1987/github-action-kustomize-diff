@@ -39,23 +39,22 @@ function safe_filename() {
   echo "$1" | sed 's/[^a-zA-Z0-9.]/_/g'
 }
 
-function build {
+function build_ref {
   local ref="$1"
-  local safe_ref=$(safe_filename "$ref")
+  local output_dir="$2"
   echo "Checking out ref: $ref"
   git checkout "$ref" --quiet
-  mkdir -p "$TMP_DIR/$safe_ref"
+  mkdir -p "$output_dir"
   for envpath in $(get_targets); do
     local relative_path="${envpath#$ROOT_DIR/}"
     local safe_path=$(safe_filename "$relative_path")
-    local output_file="$TMP_DIR/$safe_ref/${safe_path}.yaml"
+    local output_file="$output_dir/${safe_path}.yaml"
     echo "Running kustomize for $envpath"
     kustomize build "$envpath" -o "$output_file"
 
-#    debug_log "Contents of $output_file:"
-#    debug_log "$(cat "$output_file")"
-#    debug_log "End of $output_file"
-#    debug_log "------------------------------------"
+    if [ "$DEBUG" = "true" ]; then
+      debug_log "Built kustomize for $envpath to $output_file"
+    fi
   done
 }
 
@@ -65,29 +64,56 @@ function main {
   validate_max_depth
 
   git config --global --add safe.directory "$GITHUB_WORKSPACE"
-  local diff escaped_output output
-  build "$INPUT_HEAD_REF"
-  build "$INPUT_BASE_REF"
 
-  local safe_head_ref=$(safe_dirname "$INPUT_HEAD_REF")
-  local safe_base_ref=$(safe_dirname "$INPUT_BASE_REF")
+  # Save current state to restore later
+  local current_branch
+  current_branch=$(git rev-parse --abbrev-ref HEAD)
 
+  # Build BASE output
+  local safe_base_ref=$(safe_filename "$INPUT_BASE_REF")
+  local base_output_dir="$TMP_DIR/base"
+  build_ref "$INPUT_BASE_REF" "$base_output_dir"
+
+  # Create a temporary merge branch
+  local merge_branch="temp-merge-$RANDOM"
+  git checkout -b "$merge_branch" "$INPUT_BASE_REF" --quiet
+
+  debug_log "Creating temporary merge of $INPUT_HEAD_REF into $INPUT_BASE_REF"
+
+  # Attempt to merge HEAD into BASE
+  if ! git merge "$INPUT_HEAD_REF" --quiet; then
+    echo "Merge conflict detected. Cannot automatically merge $INPUT_HEAD_REF into $INPUT_BASE_REF."
+    git merge --abort
+    git checkout "$current_branch" --quiet
+    exit 1
+  fi
+
+  # Build merged output
+  local merged_output_dir="$TMP_DIR/merged"
+  build_ref "$merge_branch" "$merged_output_dir"
+
+  # Compare outputs
   set +e
-  diff=$(git diff --no-index "$TMP_DIR/$safe_base_ref" "$TMP_DIR/$safe_head_ref")
+  diff=$(git diff --no-index "$base_output_dir" "$merged_output_dir")
+  local diff_exit_code=$?
 
   debug_log "Git diff output:"
   debug_log "$diff"
   debug_log "End of git diff output"
   debug_log "------------------------------------"
 
-  if [[ -z "$diff" ]]; then
-    output="No differences found between $INPUT_BASE_REF and $INPUT_HEAD_REF"
+  # Clean up temporary branches
+  git checkout "$current_branch" --quiet
+  git branch -D "$merge_branch" --quiet
+
+  if [[ $diff_exit_code -eq 0 ]]; then
+    output="No differences found in kustomize output after merging $INPUT_HEAD_REF into $INPUT_BASE_REF"
   else
     # Just pass through the raw git diff output
     output="$diff"
   fi
 
-  escaped_output=${output//$'\n'/'%0A'}
+  local escaped_output=${output//$'\n'/'%0A'}
 
   if [ ${#escaped_output} -gt 65000 ]; then
     escaped_output="Output is greater than 65000 characters, and therefore too large to print as a github comment."

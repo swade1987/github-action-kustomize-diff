@@ -13,7 +13,8 @@ Managing Kubernetes configurations across multiple environments and PRs can be c
 ## Features
 
 - Automatically builds Kustomize configurations from both PR branches
-- Generates a diff between base and head configurations
+- Generates a diff showing what would actually change upon merge (not just differences between branches)
+- Intelligently handles parallel changes to base and feature branches
 - Configurable root directory and search depth for Kustomize files
 - Commits must meet [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
   - Automated with GitHub Actions ([commit-lint](https://github.com/conventional-changelog/commitlint/#what-is-commitlint))
@@ -21,6 +22,16 @@ Managing Kubernetes configurations across multiple environments and PRs can be c
   - Automated with GitHub Actions ([pr-lint](https://github.com/amannn/action-semantic-pull-request))
 - Commits must be signed with [Developer Certificate of Origin (DCO)](https://developercertificate.org/)
   - Automated with GitHub App ([DCO](https://github.com/apps/dco))
+
+## How It Works
+Unlike simple diff tools, this action:
+
+1. Builds Kustomize output from the base branch
+1. Creates a temporary merge of the head branch into base (simulating the actual PR merge)
+1. Builds Kustomize output from the merged state
+1. Compares these outputs to show exactly what would change after merging
+
+This approach correctly handles cases where changes have been made to the base branch in parallel to the feature branch, avoiding misleading diffs that incorrectly suggest changes would be reverted.
 
 ## Inputs
 
