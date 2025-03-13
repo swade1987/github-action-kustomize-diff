@@ -39,14 +39,6 @@ function safe_filename() {
   echo "$1" | sed 's/[^a-zA-Z0-9.]/_/g'
 }
 
-function git_with_error_handling() {
-  if ! "$@"; then
-    echo "Error executing git command: $*"
-    return 1
-  fi
-  return 0
-}
-
 function build_ref {
   local ref="$1"
   local output_dir="$2"
@@ -71,7 +63,7 @@ function main {
   validate_root_dir
   validate_max_depth
 
-  git_with_error_handling git config --global --add safe.directory "$GITHUB_WORKSPACE"
+  git config --global --add safe.directory "$GITHUB_WORKSPACE" || true
 
   # Save current state to restore later
   local current_branch
@@ -123,13 +115,13 @@ function main {
   local merge_branch="temp-merge-$RANDOM"
   git checkout -b "$merge_branch" "$base_ref_resolved" --quiet
 
-  debug_log "Creating temporary merge of $head_ref_to_use into $base_ref_to_use (via $merge_branch)"
+  debug_log "Creating temporary merge of $head_ref_resolved into $base_ref_resolved (via $merge_branch)"
 
   # Attempt to merge HEAD into BASE
-  if ! git merge "$head_ref_to_use" --quiet; then
-    echo "Merge conflict detected. Cannot automatically merge $head_ref_to_use into $base_ref_to_use."
+  if ! git merge "$head_ref_resolved" --quiet; then
+    echo "Merge conflict detected. Cannot automatically merge $INPUT_HEAD_REF into $INPUT_BASE_REF."
     git merge --abort || true
-    git checkout "$current_branch" --quiet || git checkout "$base_ref_to_use" --quiet || true
+    git checkout "$current_branch" --quiet || git checkout "$base_ref_resolved" --quiet || true
     exit 1
   fi
 
@@ -149,7 +141,7 @@ function main {
   debug_log "------------------------------------"
 
   # Clean up temporary branches
-  git checkout "$current_branch" --quiet || git checkout "$base_ref_to_use" --quiet || true
+  git checkout "$current_branch" --quiet || git checkout "$base_ref_resolved" --quiet || true
   git branch -D "$merge_branch" --quiet || true
 
   if [[ $diff_exit_code -eq 0 ]]; then
