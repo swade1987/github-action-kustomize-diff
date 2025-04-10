@@ -16,4 +16,4 @@ build:
 	docker buildx build --build-arg BUILDPLATFORM=$(BUILDPLATFORM) --build-arg TARGETARCH=$(GOARCH) -t local/$(PROJNAME) .
 
 scan: build
-	trivy --light -s "UNKNOWN,MEDIUM,HIGH,CRITICAL" --exit-code 1 local/$(PROJNAME)
+	trivy image -s "UNKNOWN,MEDIUM,HIGH,CRITICAL" --exit-code 1 local/$(PROJNAME)
