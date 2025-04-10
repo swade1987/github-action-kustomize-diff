@@ -63,6 +63,10 @@ function main {
   validate_root_dir
   validate_max_depth
 
+  # Set up git identity for merge operations
+  git config --global user.email "github-actions@github.com" || true
+  git config --global user.name "GitHub Actions" || true
+
   git config --global --add safe.directory "$GITHUB_WORKSPACE" || true
 
   # Save current state to restore later
