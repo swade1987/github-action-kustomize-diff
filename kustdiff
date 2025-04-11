@@ -50,7 +50,15 @@ function build_ref {
     local safe_path=$(safe_filename "$relative_path")
     local output_file="$output_dir/${safe_path}.yaml"
     echo "Running kustomize for $envpath"
-    kustomize build "$envpath" -o "$output_file"
+
+    # Check if kustomization.yaml contains helmCharts
+    local helm_flag=""
+    if grep -q "helmCharts:" "$envpath/kustomization.yaml"; then
+      debug_log "Helm charts detected in $envpath, enabling Helm support"
+      helm_flag="--enable-helm"
+    fi
+
+    kustomize build $helm_flag "$envpath" -o "$output_file"
 
     if [ "$DEBUG" = "true" ]; then
       debug_log "Built kustomize for $envpath to $output_file"
