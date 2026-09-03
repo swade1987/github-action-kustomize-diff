@@ -1,5 +1,11 @@
 # Kustomize Diff GitHub Action
 
+[![test](https://github.com/swade1987/github-action-kustomize-diff/actions/workflows/test.yml/badge.svg)](https://github.com/swade1987/github-action-kustomize-diff/actions/workflows/test.yml)
+[![lint](https://github.com/swade1987/github-action-kustomize-diff/actions/workflows/lint.yml/badge.svg)](https://github.com/swade1987/github-action-kustomize-diff/actions/workflows/lint.yml)
+[![commit-lint](https://github.com/swade1987/github-action-kustomize-diff/actions/workflows/commit-lint.yaml/badge.svg)](https://github.com/swade1987/github-action-kustomize-diff/actions/workflows/commit-lint.yaml)
+[![pr-lint](https://github.com/swade1987/github-action-kustomize-diff/actions/workflows/pr-lint.yml/badge.svg)](https://github.com/swade1987/github-action-kustomize-diff/actions/workflows/pr-lint.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/swade1987/github-action-kustomize-diff/badge)](https://scorecard.dev/viewer/?uri=github.com/swade1987/github-action-kustomize-diff)
+
 This GitHub Action builds and compares Kustomize configurations between the base and head of a Pull Request, posting the differences as a PR comment. This helps reviewers easily identify configuration changes in Kubernetes manifests.
 
 ## Why Use This Action?
@@ -52,7 +58,7 @@ This approach correctly handles cases where changes have been made to the base b
 
 ## Usage
 
-The below example will run `kustomize-diff` against your branch and commit the changes due to be applied back to your Pull Request.
+The below example will run `kustomize-diff` against your branch and post the resulting diff as a comment on your Pull Request.
 
 ```
 name: kustomize-diff
@@ -65,7 +71,7 @@ jobs:
   kustomize-diff:
     permissions:
       pull-requests: write
-      contents: write
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4

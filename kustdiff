@@ -114,7 +114,6 @@ function main {
   debug_log "Resolved base reference: $base_ref_resolved (from $INPUT_BASE_REF)"
 
   # Build BASE output
-  local safe_base_ref=$(safe_filename "$INPUT_BASE_REF")
   local base_output_dir="$TMP_DIR/base"
   build_ref "$base_ref_resolved" "$base_output_dir"
 
@@ -163,13 +162,20 @@ function main {
     output="$diff"
   fi
 
-  local escaped_output=${output//$'\n'/'%0A'}
-
-  if [ ${#escaped_output} -gt 65000 ]; then
-    escaped_output="Output is greater than 65000 characters, and therefore too large to print as a github comment."
+  if [ ${#output} -gt 65000 ]; then
+    output="Output is greater than 65000 characters, and therefore too large to print as a github comment."
   fi
 
-  echo "::set-output name=diff::$escaped_output"
+  # $GITHUB_OUTPUT (not the old "::set-output::" workflow command, which
+  # GitHub deprecated) natively supports multiline values via this
+  # delimiter form - the value between the two matching lines is taken
+  # verbatim, real newlines included, so no manual %0A-style escaping is
+  # needed (or wanted: a consumer reading this value expects real newlines).
+  {
+    echo "diff<<KUSTOMIZE_DIFF_EOF"
+    echo "$output"
+    echo "KUSTOMIZE_DIFF_EOF"
+  } >>"$GITHUB_OUTPUT"
 }
 
 # Print initial configuration
