@@ -1,0 +1,81 @@
+name: test
+
+on:
+  pull_request:
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout kustomize-diff-test
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: swade1987/kustomize-diff-test
+          path: fixture
+          fetch-depth: 0
+
+      - name: Checkout this action
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: action
+
+      - name: Build the action image
+        working-directory: action
+        run: docker build -t kustomize-diff:ci .
+
+      # Deterministic change on a throwaway local branch, never pushed - a
+      # known-good target this test can assert against, independent of
+      # whatever state the fixture repo's own branches happen to be in.
+      - name: Create a known change on a throwaway branch
+        working-directory: fixture
+        run: |
+          git config user.email "ci@github-actions.local"
+          git config user.name "github-actions[ci]"
+          git checkout -b e2e-test-branch
+          sed -i 's/ENV=base/ENV=base-e2e-test/' kustomize/base/kustomization.yaml
+          git add -A
+          git commit -sm "test: e2e change"
+
+      - name: Run the action against the fixture
+        working-directory: fixture
+        run: |
+          docker run --rm \
+            -v "$(pwd):/github/workspace" \
+            -v "$RUNNER_TEMP/output.txt:/github_output.txt" \
+            -w /github/workspace \
+            -e GITHUB_WORKSPACE=/github/workspace \
+            -e GITHUB_OUTPUT=/github_output.txt \
+            -e INPUT_BASE_REF=main \
+            -e INPUT_HEAD_REF=e2e-test-branch \
+            -e INPUT_ROOT_DIR=./kustomize \
+            -e INPUT_MAX_DEPTH=2 \
+            -e DEBUG=false \
+            kustomize-diff:ci
+        env:
+          RUNNER_TEMP: ${{ runner.temp }}
+
+      - name: Assert the diff output is correct
+        run: |
+          touch "$RUNNER_TEMP/output.txt"
+          if ! grep -q "^diff<<" "$RUNNER_TEMP/output.txt"; then
+            echo "::error::GITHUB_OUTPUT was never written - the action produced no diff output at all"
+            cat "$RUNNER_TEMP/output.txt"
+            exit 1
+          fi
+          if ! grep -q -- "-  ENV: base$" "$RUNNER_TEMP/output.txt" || ! grep -q -- "+  ENV: base-e2e-test$" "$RUNNER_TEMP/output.txt"; then
+            echo "::error::Expected diff content not found in the action's output"
+            cat "$RUNNER_TEMP/output.txt"
+            exit 1
+          fi
+          echo "Diff output looks correct:"
+          cat "$RUNNER_TEMP/output.txt"
+        env:
+          RUNNER_TEMP: ${{ runner.temp }}
