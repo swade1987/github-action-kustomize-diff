@@ -12,7 +12,7 @@ ARG KUSTOMIZE=5.8.1
 RUN curl -sL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE}/kustomize_v${KUSTOMIZE}_linux_amd64.tar.gz | \
 tar xz && mv kustomize /usr/local/bin/kustomize
 
-ARG HELM_VERSION=3.19.2
+ARG HELM_VERSION=4.2.4
 RUN curl -sSL https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz | \
 tar xz && mv linux-amd64/helm /usr/local/bin/helm && rm -rf linux-amd64 && helm version
 
